@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Get all machines
 exports.getAllMachines = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM machines');
+        const { rows } = await db.query('SELECT * FROM machines');
         res.status(200).json(rows);
     } catch (error) {
         next(error);
@@ -13,7 +13,7 @@ exports.getAllMachines = async (req, res, next) => {
 // Get single machine
 exports.getMachineById = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM machines WHERE id = ?', [req.params.id]);
+        const { rows } = await db.query('SELECT * FROM machines WHERE id = $1', [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ message: 'Machine not found' });
         res.status(200).json(rows[0]);
     } catch (error) {
@@ -27,11 +27,11 @@ exports.createMachine = async (req, res, next) => {
         const { name, type, status } = req.body;
         if (!name || !type) return res.status(400).json({ message: 'Name and type required' });
 
-        const [result] = await db.query(
-            'INSERT INTO machines (name, type, status) VALUES (?, ?, ?)',
+        const { rows } = await db.query(
+            'INSERT INTO machines (name, type, status) VALUES ($1, $2, $3) RETURNING id',
             [name, type, status || 'Idle']
         );
-        res.status(201).json({ id: result.insertId, message: 'Machine added successfully' });
+        res.status(201).json({ id: rows[0].id, message: 'Machine added successfully' });
     } catch (error) {
         next(error);
     }
@@ -43,12 +43,12 @@ exports.updateMachineStatus = async (req, res, next) => {
         const { status } = req.body;
         if (!status) return res.status(400).json({ message: 'Status is required' });
 
-        const [result] = await db.query(
-            'UPDATE machines SET status = ? WHERE id = ?',
+        const result = await db.query(
+            'UPDATE machines SET status = $1 WHERE id = $2',
             [status, req.params.id]
         );
 
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Machine not found' });
+        if (result.rowCount === 0) return res.status(404).json({ message: 'Machine not found' });
         res.status(200).json({ message: 'Machine status updated' });
     } catch (error) {
         next(error);
@@ -61,12 +61,12 @@ exports.updateMachine = async (req, res, next) => {
         const { name, type, status } = req.body;
         if (!name || !type) return res.status(400).json({ message: 'Name and type required' });
 
-        const [result] = await db.query(
-            'UPDATE machines SET name = ?, type = ?, status = ? WHERE id = ?',
+        const result = await db.query(
+            'UPDATE machines SET name = $1, type = $2, status = $3 WHERE id = $4',
             [name, type, status || 'Idle', req.params.id]
         );
 
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Machine not found' });
+        if (result.rowCount === 0) return res.status(404).json({ message: 'Machine not found' });
         res.status(200).json({ message: 'Machine updated successfully' });
     } catch (error) {
         next(error);
@@ -76,8 +76,8 @@ exports.updateMachine = async (req, res, next) => {
 // Delete machine
 exports.deleteMachine = async (req, res, next) => {
     try {
-        const [result] = await db.query('DELETE FROM machines WHERE id = ?', [req.params.id]);
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Machine not found' });
+        const result = await db.query('DELETE FROM machines WHERE id = $1', [req.params.id]);
+        if (result.rowCount === 0) return res.status(404).json({ message: 'Machine not found' });
         res.status(200).json({ message: 'Machine deleted successfully' });
     } catch (error) {
         next(error);

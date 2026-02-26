@@ -47,7 +47,7 @@ exports.getSchedules = async (req, res, next) => {
       JOIN machines m ON s.machine_id = m.id
       JOIN workers w ON s.worker_id = w.id
     `;
-        const [rows] = await db.query(query);
+        const { rows } = await db.query(query);
         res.status(200).json(rows);
     } catch (error) {
         next(error);

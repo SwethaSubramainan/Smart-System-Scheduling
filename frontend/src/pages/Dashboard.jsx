@@ -5,27 +5,39 @@ import { fetchKPIs } from '../services/api';
 const Dashboard = () => {
     const [kpis, setKpis] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const data = await fetchKPIs();
-                setKpis(data);
-            } catch (error) {
-                console.error("Failed to fetch KPIs:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
-    }, []);
+    const loadData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await fetchKPIs();
+            setKpis(data);
+        } catch (err) {
+            console.error("Failed to fetch KPIs:", err);
+            setError('Could not load dashboard data. Is the backend running?');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { loadData(); }, []);
 
     return (
         <div className="animate-fade-in">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System Overview</h1>
-                <p className="text-slate-500 mt-1">Real-time metrics and manufacturing KPIs.</p>
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System Overview</h1>
+                    <p className="text-slate-500 mt-1">Real-time metrics and manufacturing KPIs.</p>
+                </div>
+                <button onClick={loadData} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                    Refresh
+                </button>
             </div>
+
+            {error && (
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">{error}</div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">

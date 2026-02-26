@@ -1,30 +1,26 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const dbConfig = {
+const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'smart_scheduling',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-
-// Create a connection pool instead of a single connection for better performance
-const pool = mysql.createPool(dbConfig);
+    max: 10,
+});
 
 // Helper function to test connection
 const testConnection = async () => {
     try {
-        const connection = await pool.getConnection();
-        console.log('Successfully connected to the MySQL database.');
-        connection.release();
+        const client = await pool.connect();
+        console.log('Successfully connected to the PostgreSQL database.');
+        client.release();
     } catch (error) {
         console.error('Error connecting to the database:', error.message);
-        console.error('Please ensure MySQL is running and the database exists.');
+        console.error('Please ensure PostgreSQL is running and the database exists.');
     }
 };
 

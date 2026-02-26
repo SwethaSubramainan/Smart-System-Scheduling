@@ -2,53 +2,94 @@ import axios from 'axios';
 
 // Create an Axios instance
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // Replace with your actual backend URL
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Mocked functions for hackathon readiness
-// In a real scenario, these would call endpoints like api.get('/jobs')
-
+// ─── Jobs ────────────────────────────────────────────
 export const fetchJobs = async () => {
-    // Simulate API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve([
-            { id: 1, name: 'Job A', status: 'In Progress', machine: 'Machine 1', worker: 'Alice' },
-            { id: 2, name: 'Job B', status: 'Pending', machine: 'Machine 2', worker: 'Bob' },
-        ]), 500);
-    });
+    const { data } = await api.get('/jobs');
+    return data;
 };
 
+export const createJob = async (job) => {
+    const { data } = await api.post('/jobs', job);
+    return data;
+};
+
+export const updateJob = async (id, job) => {
+    const { data } = await api.put(`/jobs/${id}`, job);
+    return data;
+};
+
+export const deleteJob = async (id) => {
+    const { data } = await api.delete(`/jobs/${id}`);
+    return data;
+};
+
+// ─── Machines ────────────────────────────────────────
 export const fetchMachines = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve([
-            { id: 1, name: 'Machine 1', status: 'Running', utilization: 85 },
-            { id: 2, name: 'Machine 2', status: 'Idle', utilization: 0 },
-            { id: 3, name: 'Machine 3', status: 'Maintenance', utilization: 0 },
-        ]), 500);
-    });
+    const { data } = await api.get('/machines');
+    return data;
 };
 
+export const createMachine = async (machine) => {
+    const { data } = await api.post('/machines', machine);
+    return data;
+};
+
+export const updateMachine = async (id, machine) => {
+    const { data } = await api.put(`/machines/${id}`, machine);
+    return data;
+};
+
+export const deleteMachine = async (id) => {
+    const { data } = await api.delete(`/machines/${id}`);
+    return data;
+};
+
+// ─── Workers ─────────────────────────────────────────
 export const fetchWorkers = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve([
-            { id: 1, name: 'Alice', skill: 'Welding', utilization: 90 },
-            { id: 2, name: 'Bob', skill: 'Assembly', utilization: 75 },
-        ]), 500);
-    });
+    const { data } = await api.get('/workers');
+    return data;
+};
+
+export const createWorker = async (worker) => {
+    const { data } = await api.post('/workers', worker);
+    return data;
+};
+
+export const updateWorker = async (id, worker) => {
+    const { data } = await api.put(`/workers/${id}`, worker);
+    return data;
+};
+
+export const deleteWorker = async (id) => {
+    const { data } = await api.delete(`/workers/${id}`);
+    return data;
+};
+
+// ─── Schedule & KPIs ─────────────────────────────────
+export const fetchSchedules = async () => {
+    const { data } = await api.get('/schedule');
+    return data;
+};
+
+export const generateSchedule = async () => {
+    const { data } = await api.post('/schedule/generate');
+    return data;
+};
+
+export const reportBreakdown = async (machineId) => {
+    const { data } = await api.post('/schedule/breakdown', { machineId });
+    return data;
 };
 
 export const fetchKPIs = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve({
-            machineUtilization: 75,
-            workerUtilization: 80,
-            onTimeDelivery: 92,
-            delayedJobs: 3
-        }), 500);
-    });
+    const { data } = await api.get('/schedule/kpis');
+    return data;
 };
 
 export default api;

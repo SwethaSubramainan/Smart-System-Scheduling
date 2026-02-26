@@ -4,8 +4,8 @@ import { Plus } from 'lucide-react';
 const MachineForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
         name: '',
-        status: 'Idle',
-        utilization: 0
+        type: '',
+        status: 'Idle'
     });
 
     const handleChange = (e) => {
@@ -14,8 +14,8 @@ const MachineForm = ({ onSubmit }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit({ ...formData, utilization: Number(formData.utilization) });
-        setFormData({ name: '', status: 'Idle', utilization: 0 });
+        onSubmit(formData);
+        setFormData({ name: '', type: '', status: 'Idle' });
     };
 
     return (
@@ -27,7 +27,18 @@ const MachineForm = ({ onSubmit }) => {
             <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="flex-1 w-full">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Machine Name</label>
-                    <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder="e.g. Lathe M-2" />
+                    <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder="e.g. CNC Lathe Alpha" />
+                </div>
+                <div className="flex-1 w-full">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Machine Type</label>
+                    <select name="type" value={formData.type} onChange={handleChange} required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+                        <option value="">Select type...</option>
+                        <option value="CNC">CNC</option>
+                        <option value="Milling">Milling</option>
+                        <option value="Welding">Welding</option>
+                        <option value="Assembly">Assembly</option>
+                        <option value="Lathe">Lathe</option>
+                    </select>
                 </div>
                 <div className="flex-1 w-full">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>

@@ -1,29 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import WorkerForm from '../components/WorkerForm';
-import { fetchWorkers } from '../services/api';
-import { Users, HardHat, TrendingUp } from 'lucide-react';
+import { fetchWorkers, createWorker, deleteWorker } from '../services/api';
+import { Users, HardHat, Trash2 } from 'lucide-react';
+
+const statusBadge = (status) => {
+    const base = 'px-2.5 py-1 text-xs font-semibold rounded-full';
+    if (status === 'Available') return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+    if (status === 'Busy') return `${base} bg-indigo-50 text-indigo-700 border border-indigo-200`;
+    return `${base} bg-slate-100 text-slate-600 border border-slate-200`;
+};
 
 const Workers = () => {
     const [workers, setWorkers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const loadWorkers = async () => {
-            try {
-                const data = await fetchWorkers();
-                setWorkers(data);
-            } catch (error) {
-                console.error("Failed to load workers:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadWorkers();
-    }, []);
+    const loadWorkers = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchWorkers();
+            setWorkers(data);
+        } catch (err) {
+            setError('Failed to load workers. Is the backend running?');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const handleAddWorker = (newWorker) => {
-        const workerWithId = { ...newWorker, id: Date.now() };
-        setWorkers([...workers, workerWithId]);
+    useEffect(() => { loadWorkers(); }, []);
+
+    const handleAddWorker = async (newWorker) => {
+        try {
+            await createWorker(newWorker);
+            await loadWorkers();
+        } catch (err) {
+            alert('Failed to add worker: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this worker?')) return;
+        try {
+            await deleteWorker(id);
+            await loadWorkers();
+        } catch (err) {
+            alert('Failed to delete: ' + (err.response?.data?.message || err.message));
+        }
     };
 
     return (
@@ -40,12 +63,17 @@ const Workers = () => {
 
             <WorkerForm onSubmit={handleAddWorker} />
 
-            {loading ? (
+            {error ? (
+                <div className="p-8 text-center text-rose-500 bg-white rounded-xl border border-rose-200">{error}</div>
+            ) : loading ? (
                 <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {workers.map((worker) => (
                         <div key={worker.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center hover:-translate-y-1 transition-transform relative group">
+                            <button onClick={() => handleDelete(worker.id)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Delete worker">
+                                <Trash2 size={16} />
+                            </button>
                             <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-4 text-indigo-600 shadow-inner">
                                 <HardHat size={40} />
                             </div>
@@ -53,20 +81,8 @@ const Workers = () => {
                             <div className="mt-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold uppercase tracking-wider">
                                 {worker.skill}
                             </div>
-
-                            <div className="w-full mt-6 pt-4 border-t border-slate-100">
-                                <div className="flex justify-between items-center text-sm text-slate-500 mb-2">
-                                    <span className="flex items-center gap-1"><TrendingUp size={14} /> Utilization</span>
-                                    <span className="font-semibold text-slate-700">{worker.utilization}%</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                                    <div
-                                        className={`h-1.5 rounded-full transition-all duration-500 ${worker.utilization > 85 ? 'bg-amber-500' :
-                                                worker.utilization > 40 ? 'bg-indigo-500' : 'bg-emerald-500'
-                                            }`}
-                                        style={{ width: `${worker.utilization}%` }}
-                                    ></div>
-                                </div>
+                            <div className="mt-3">
+                                <span className={statusBadge(worker.status)}>{worker.status}</span>
                             </div>
                         </div>
                     ))}

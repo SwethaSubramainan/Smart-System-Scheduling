@@ -1,13 +1,8 @@
 import React from 'react';
 import { Gantt, ViewMode } from 'gantt-task-react';
-// import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
 
 const GanttChart = ({ tasks }) => {
-    // Map our generic job objects to gantt-task-react objects if necessary
-    // Expected structure for Task:
-    // { start: Date, end: Date, name: string, id: string, type: 'task' | 'milestone' | 'project', progress: number, isDisabled: boolean, styles: { progressColor, progressSelectedColor } }
-
     if (!tasks || tasks.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
@@ -16,38 +11,55 @@ const GanttChart = ({ tasks }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <p className="text-slate-500 font-medium tracking-wide">No scheduled tasks found to display Gantt chart.</p>
-                <p className="text-sm text-slate-400 mt-1">Please add jobs to see the schedule.</p>
+                <p className="text-slate-500 font-medium tracking-wide">No scheduled tasks to display.</p>
+                <p className="text-sm text-slate-400 mt-1">Click "Generate Schedule" to create assignments.</p>
             </div>
         );
     }
 
-    // Format task data to required Gantt format
-    const ganttTasks = tasks.map((t, idx) => ({
-        start: new Date(t.startDate || new Date()),
-        end: new Date(t.endDate || new Date(new Date().setDate(new Date().getDate() + 1))),
-        name: `${t.name} (${t.machine})`,
-        id: t.id ? t.id.toString() : `task-${idx}`,
-        type: 'task',
-        progress: t.status === 'Completed' ? 100 : t.status === 'In Progress' ? 50 : 0,
-        isDisabled: false,
-        styles: {
-            progressColor: t.status === 'Completed' ? '#10b981' : '#6366f1',
-            progressSelectedColor: '#4f46e5'
+    // Backend schedule format: { id, start_time, end_time, job_name, job_status, machine_name, worker_name }
+    const ganttTasks = tasks.map((t, idx) => {
+        const start = new Date(t.start_time || t.startDate || new Date());
+        let end = new Date(t.end_time || t.endDate || new Date());
+        // Ensure end > start (at least 1 hour apart)
+        if (end <= start) {
+            end = new Date(start.getTime() + 3600000);
         }
-    }));
+
+        const name = t.job_name
+            ? `${t.job_name} → ${t.machine_name} (${t.worker_name})`
+            : t.name || `Task ${idx + 1}`;
+
+        const status = t.job_status || t.status || 'Pending';
+
+        return {
+            start,
+            end,
+            name,
+            id: t.id ? t.id.toString() : `task-${idx}`,
+            type: 'task',
+            progress: status === 'Completed' ? 100 : status === 'In Progress' ? 50 : 0,
+            isDisabled: false,
+            styles: {
+                progressColor: status === 'Completed' ? '#10b981' : status === 'Delayed' ? '#f43f5e' : '#6366f1',
+                progressSelectedColor: '#4f46e5',
+                backgroundColor: status === 'Delayed' ? '#fecdd3' : '#e0e7ff',
+                backgroundSelectedColor: '#c7d2fe'
+            }
+        };
+    });
 
     return (
         <div className="gantt-container bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100">
-                <h3 className="text-lg font-semibold text-slate-800">Production Schedule</h3>
+                <h3 className="text-lg font-semibold text-slate-800">Production Schedule ({tasks.length} tasks)</h3>
             </div>
             <div className="p-2 overflow-x-auto w-full">
                 <Gantt
                     tasks={ganttTasks}
-                    viewMode={ViewMode.Day}
-                    listCellWidth="155px"
-                    columnWidth={60}
+                    viewMode={ViewMode.Hour}
+                    listCellWidth="200px"
+                    columnWidth={40}
                     barBackgroundColor="#e0e7ff"
                     barBackgroundSelectedColor="#c7d2fe"
                     projectProgressColor="#a78bfa"
